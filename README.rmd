@@ -1,0 +1,24 @@
+---
+title: "nclb_segregation"
+author: "Erik Johnson"
+date: "9/6/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(data.table)
+library(sp)
+library(rgdal)
+```
+
+## R Markdown
+
+Data for the NCLB presentation
+
+# Identify Secessions
+
+```{r eval=TRUE, echo=FALSE}
+secessions <- get_secessions()
+
+```
