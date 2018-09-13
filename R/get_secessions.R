@@ -3,7 +3,7 @@ get_secessions <- function(){
   library(sp)
   if(!file.exists(get_secessions_location)){
     # Schools locations
-    schools <- readRDS('~/Box Sync/Segregation/SchoolData/public/ejData_never_delete_me.rds')
+    schools <- readRDS('~/Dropbox/pkg.data/nclb_segregation/Clean/ejData_never_delete_me.rds')
     schools <- schools[, .(LEAID, NCESSCH, YEAR, BESTLON, BESTLAT)]
     schools <- schools[!(is.na(BESTLON))]
     schools <- schools[!(is.na(BESTLAT))]
