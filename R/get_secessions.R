@@ -51,7 +51,7 @@ get_secessions <- function(){
     shp_97_98@data <- shp_97_98@data[, shp_LEA:=GEOID]
     proj4string(shp_97_98) <- proj_env
     
-    # 1999/00
+    # 1999/00)
     shp_99_00 <- rgdal::readOGR(dsn = path.expand('~/Dropbox/pkg.data/nclb_segregation/SchoolData/district_shp_files/School_distrct_mapping/'),
                                 layer='schooldistrict_sy9900_tl99', 
                                 stringsAsFactors = FALSE)
@@ -166,7 +166,7 @@ get_secessions <- function(){
     
     # Overlay schools on 2005/06 map
     dt_05_06 <- sp::over(schools_pts, shp_05_06)
-    dt_05_06 <- cbind(dt_05_06, schools_pts@data, year='0304')
+    dt_05_06 <- cbind(dt_05_06, schools_pts@data, year='0506')
     l_pts$dt_05_06 <- dt_05_06[, .(GEOID, NCESSCH, year)]
     
     # Overlay schools on 2007/08 map
@@ -195,8 +195,69 @@ get_secessions <- function(){
     l_pts$dt_15_16 <- dt_15_16[, .(GEOID, NCESSCH, year)]
     
     dt_pts_dists <- rbindlist(l_pts, use.names = TRUE, fill = TRUE)
+  
+    # Start checking to identify which schools are in one school district for the whole time period
+    l_status <- list()
+    n_years <- length(unique(dt_pts_dists$year))
+    dt_pts_dists <- dt_pts_dists[, n_location_years:=.N, by=.(NCESSCH, GEOID)]
+    dt_analyze <- copy(dt_pts_dists)
+    table(dt_pts_dists$n_location_years)
+    # No change
+    l_status$no_change <- unique(dt_pts_dists[n_location_years==n_years]$NCESSCH)
+    dt_analyze <- copy(dt_analyze[!(NCESSCH %in% l_status$no_change)])
     
     
     
-    }
+    # Year mapping
+    l_maps <- vector('list', length=n_years)
+    l_maps[[1]] <- list(sYear='8990', numYear = 1989, map=shp_89_90)
+    l_maps[[2]] <- list(sYear='9596', numYear = 1995, map=shp_95_96)
+    l_maps[[3]] <- list(sYear='9798', numYear = 1997, map=shp_97_98)
+    l_maps[[4]] <- list(sYear='9900', numYear = 1999, map=shp_99_00)
+    l_maps[[5]] <- list(sYear='0102', numYear = 2001, map=shp_01_02)
+    l_maps[[6]] <- list(sYear='0304', numYear = 2003, map=shp_03_04)
+    l_maps[[7]] <- list(sYear='0506', numYear = 2005, map=shp_05_06)
+    l_maps[[8]] <- list(sYear='0708', numYear = 2007, map=shp_07_08)
+    l_maps[[9]] <- list(sYear='0910', numYear = 2009, map=shp_09_10)
+    l_maps[[10]] <- list(sYear='1112', numYear = 2011, map=shp_11_12)
+    l_maps[[11]] <- list(sYear='1314', numYear = 2013, map=shp_13_14)
+    l_maps[[12]] <- list(sYear='1516', numYear = 2015, map=shp_15_16)
+  
+    # For each school that has changed school district, find out year(s) and reasons
+    school <- dt_analyze[NCESSCH=='10000600123']
+    plot(shp_03_04[shp_03_04@data$GEOID=='0100006',], col=rgb(red=1, green=0, blue=0, alpha=0.3))
+    plot(shp_15_16[shp_15_16@data$GEOID=='0100012',], col = rgb(red = 0, green = 0, blue = 1, alpha = 0.2), add=TRUE)
+    plot(shp_05_06[shp_05_06@data$GEOID=='0199016',], col = rgb(red = 0, green = 1, blue = 0, alpha = 0.1), add=TRUE)
+    plot(schools_pts[schools_pts@data$NCESSCH=='10000600123',], col = rgb(red = 0, green = 1, blue = 1, alpha = 1))
+    # Is the new school disrict larger or smaller than the old one.
+    
+    
+    
+    
+    ### Meeting with Amanda Segregation by county using base and new years
+    schools <- schools[!(is.na(BESTLON))]
+    schools <- schools[!(is.na(BESTLAT))]
+    schools <- schools[BESTLAT>18]
+    schools_unique <- unique(schools[, .(LEAID, YEAR, NCESSCH, BESTLON=round(BESTLON,4), BESTLAT=round(BESTLAT,4), BLACK, WHITE)])
+    coords <- cbind(Longitude = as.numeric(as.character(schools_unique$BESTLON)), 
+                    Latitude = as.numeric(as.character(schools_unique$BESTLAT)))
+    schools_pts <- sp::SpatialPointsDataFrame(coords, schools_unique, proj4string = sp::CRS(proj_env))
+    
+    map_base_year <- l_maps[[1]]$map
+    for(iMap in 1:length(l_maps)){
+      l_map <- l_maps[[iMap]]
+      map_year <- l_map$numYear
+      schools_pts_year <- schools_pts[schools_pts@data$YEAR == map_year,]
+      schools_pts_year@data <- as.data.table(schools_pts_year@data)
+      schools_pts_year@data <- schools_pts_year@data[, .(BLACK, WHITE, NCESSCH)]
+      over_base <- sp::over(schools_pts_year, map_base_year)
+      over_base <- as.data.table(cbind(schools_pts_year@data, over_base))
+      over_same <- sp::over(schools_pts_year, l_map$map)
+      over_same <- as.data.table(cbind(schools_pts_year@data, over_same))
+      # Create Spatial Indices
+      
+    }   
+    
+    
+    
 }
