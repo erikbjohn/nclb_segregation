@@ -34,23 +34,25 @@ analyze_segregation_indices <- function(){
     
     dt_inds <- rbindlist(l_dt_inds, use.names=TRUE, fill=TRUE)
     
+    # Weird indices
     indices_lea <- unique(dt_inds$shp_LEA)
     schools_lea <- unique(l_schools$dt$LEAID)
     
     indices_lea[which(!(indices_lea %in% schools_lea))]
+    dt_inds[shp_LEA %in% indices_lea]
     length(indices_lea[which(!(indices_lea %in% schools_lea))])
     
     schools_lea[which(!(schools_lea %in% indices_lea))]
     length(schools_lea[which(!(schools_lea %in% indices_lea))])
     
-    
     dt_inds <- dt_inds[!is.na(dissimilarity) & !is.na(exposure_bw) & !is.na(exposure_wb)]
     dt_inds <- dt_inds[!is.infinite(dissimilarity) & !is.infinite(exposure_bw) & !is.infinite(exposure_wb)]
     dt_inds <- dt_inds[, year_count:=.N, by=shp_LEA]
-    dt_inds <- dt_inds[]
     max_years <- max(dt_inds$year_count)
+    
     #dt_inds <- dt_inds[year_count==max_years]
     #dt_inds <- dt_inds[year_count > 15]
+    
     dt_inds$year_count <- NULL
     setkey(dt_inds, shp_LEA, year)
     
@@ -135,6 +137,65 @@ analyze_segregation_indices <- function(){
       ggtitle('Dissimilarity')
     
     print(l_out$boundary_analysis_dissimilarity)
+    
+    # Plot for consistent boundaries
+    l_dts_consistent <- list()
+    
+    l_dts_consistent$restricted_never <- dt[LEAID %in% districts_restricted_never & boundaries %in% 'consistent',
+                                         .(dissimilarity=mean(dissimilarity),
+                                           exposure_bw=mean(exposure_bw), 
+                                           exposure_wb=mean(exposure_wb),
+                                           sample_type='restricted never'),
+                                         by=YEAR]
+    
+    l_dts_consistent$released_1990 <- dt[LEAID %in% districts_released_1990 & boundaries %in% 'consistent'][, .(dissimilarity=mean(dissimilarity),
+                                                                                                               exposure_bw=mean(exposure_bw), 
+                                                                                                               exposure_wb=mean(exposure_wb),
+                                                                                                               sample_type='released < 1990'),
+                                                                                                           by=YEAR]
+    
+    l_dts_consistent$released_1990_2000 <- dt[LEAID %in% districts_released_1990_2000 & boundaries %in% 'consistent'][, .(dissimilarity=mean(dissimilarity),
+                                                                                                                         exposure_bw=mean(exposure_bw), 
+                                                                                                                         exposure_wb=mean(exposure_wb),
+                                                                                                                         sample_type='released 1990 - 2000'),
+                                                                                                                     by=YEAR]
+    
+    l_dts_consistent$released_2000_2010 <- dt[LEAID %in% districts_released_2000_2010 & boundaries %in% 'consistent'][, .(dissimilarity=mean(dissimilarity),
+                                                                                                                         exposure_bw=mean(exposure_bw), 
+                                                                                                                         exposure_wb=mean(exposure_wb),
+                                                                                                                         sample_type='released 2000 - 2010'),
+                                                                                                                     by=YEAR]
+    
+    
+    dt_plots <- rbindlist(l_dts_consistent, use.names = TRUE, fill=TRUE)  
+    
+    l_out$Dissimilarity_consistent <- ggplot2::ggplot(dt_plots, aes(x=YEAR, y=dissimilarity, group=sample_type, color=sample_type)) + 
+      geom_line() + 
+      ggtitle('Dissimilarity - Consistent')
+    print(l_out$Dissimilarity_consistent)
+    
+    l_out$ExposureBW_consistent <- ggplot2::ggplot(dt_plots, aes(x=YEAR, y=exposure_bw, group=sample_type, color=sample_type)) + 
+      geom_line() + 
+      ggtitle('Exposure BW')
+    print(l_out$ExposureBW_consistent)
+    
+    l_out$ExposureWB_consistent <- ggplot2::ggplot(dt_plots, aes(x=YEAR, y=exposure_wb, group=sample_type, color=sample_type)) + 
+      geom_line() + 
+      ggtitle('Exposure WB')
+    print(l_out$ExposureWB_consistent)
+    
+    # Examine segregation using both consistent and contemporary base year boundary
+    dt_plots <- dt[,.(dissimilarity=mean(dissimilarity),
+                      exposure_bw=mean(exposure_bw), 
+                      exposure_wb=mean(exposure_wb)),
+                   by=.(YEAR, boundaries)]
+    
+    l_out$boundary_analysis_dissimilarity <- ggplot2::ggplot(dt_plots, aes(x=YEAR, y=dissimilarity, group=boundaries, color=boundaries)) + 
+      geom_line() + 
+      ggtitle('Dissimilarity')
+    
+    print(l_out$boundary_analysis_dissimilarity)
+    
     
     dt_plots <- dt[,.(dissimilarity=mean(dissimilarity),
                       exposure_bw=mean(exposure_bw), 
