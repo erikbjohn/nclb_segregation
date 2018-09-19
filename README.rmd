@@ -10,6 +10,15 @@ knitr::opts_chunk$set(echo = TRUE)
 library(data.table)
 library(sp)
 library(rgdal)
+library(ggplot2)
+library(stringr)
+source('R/analyze_segregation_indices.R')
+source('R/create_secessions.R')
+source('R/create_segregation_indices.R')
+source('R/functions_segregation_indices.R')
+source('R/get_district_maps.R')
+source('R/get_proj_env.R')
+source('R/get_schools.R')
 ```
 
 ## R Markdown

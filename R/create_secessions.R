@@ -4,21 +4,9 @@ create_secessions <- function(){
   library(sp)
   if(!file.exists(get_secessions_location)){
     
-    district_maps <- get_district_maps()
-    
-    # Schools locations
-    schools <- readRDS('~/Dropbox/pkg.data/nclb_segregation/Clean/ejData_never_delete_me.rds')
-    schools <- schools[, .(LEAID, NCESSCH, YEAR, BESTLON, BESTLAT)]
-    schools <- schools[!(is.na(BESTLON))]
-    schools <- schools[!(is.na(BESTLAT))]
-    schools <- schools[BESTLAT>18]
-    
-    schools_unique <- unique(schools[, .(LEAID, NCESSCH, BESTLON=round(BESTLON,4), BESTLAT=round(BESTLAT,4))])
-    coords <- cbind(Longitude = as.numeric(as.character(schools_unique$BESTLON)), 
-                    Latitude = as.numeric(as.character(schools_unique$BESTLAT)))
-    schools_pts <- sp::SpatialPointsDataFrame(coords, schools_unique, proj4string = sp::CRS(proj_env))
-    rgdal::writeOGR(schools_pts, '~/Downloads/', 'tmp_schools_pts', driver='ESRI Shapefile')
-    schools_pts@data 
+    l_district_maps <- get_district_maps()
+    l_schools <- get_schools()
+   
     
        
     # All shapes imports
@@ -98,6 +86,7 @@ create_secessions <- function(){
     l_status <- list()
     n_years <- length(unique(dt_pts_dists$year))
     dt_pts_dists <- dt_pts_dists[, n_location_years:=.N, by=.(NCESSCH, GEOID)]
+    saveRDS(dt_pts_dists, file='~/Dropbox/pkg.data/nclb_segregation/schools_and_districts_years.rds')
     dt_analyze <- copy(dt_pts_dists)
     table(dt_pts_dists$n_location_years)
     # No change
@@ -111,7 +100,7 @@ create_secessions <- function(){
     plot(shp_05_06[shp_05_06@data$GEOID=='0199016',], col = rgb(red = 0, green = 1, blue = 0, alpha = 0.1), add=TRUE)
     plot(schools_pts[schools_pts@data$NCESSCH=='10000600123',], col = rgb(red = 0, green = 1, blue = 1, alpha = 1))
     
-    
+  }
     
 
     
