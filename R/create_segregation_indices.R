@@ -34,8 +34,8 @@ create_segregation_indices <- function(){
       over_base <- as.data.table(cbind(schools_pts_year@data, over_base))
       over_same <- sp::over(schools_pts_year, l_map$map)
       over_same <- as.data.table(cbind(schools_pts_year@data, over_same))
-      indices_base <- functions_segregation_indices(over_base)
-      indices_same <- functions_segregation_indices(over_same)
+      indices_base <- functions_segregation_indices(over_base, geo_scale='shp_LEA')
+      indices_same <- functions_segregation_indices(over_same, geo_scale='shp_LEA')
       l_indices_years[[iYear]] <- list(year=map_year,
                                 year_base = year_base_year,
                                 dt_indices_base = indices_base,

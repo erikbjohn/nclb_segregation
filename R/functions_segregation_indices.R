@@ -1,4 +1,4 @@
-functions_segregation_indices <- function(dt){
+functions_segregation_indices <- function(dt, geo_scale){
   # Dissimilarity and Exposure indices
   #
   # black to white Exposure Index
@@ -11,22 +11,23 @@ functions_segregation_indices <- function(dt){
   
   dt <- dt[!is.na(BLACK)]
   dt <- dt[!is.na(WHITE)]
-  dt <- dt[!is.na(shp_LEA)]
-  dt <- dt[, black_tot := sum(BLACK), by=shp_LEA]
-  dt <- dt[, white_tot := sum(WHITE), by=shp_LEA]
+  dt <- dt[!is.na(geo_scale)]
+  dt <- dt[, black_tot := sum(BLACK), by=geo_scale]
+  dt <- dt[, white_tot := sum(WHITE), by=geo_scale]
   dt <- dt[, tot := black_tot + white_tot]
   
   # Dissimilarity Index
   dt <- dt[, school_share_diff := abs((BLACK/black_tot)-(WHITE/white_tot))]
-  dt <- dt[, dissimilarity:=0.5*(sum(school_share_diff)), by=shp_LEA]
+  dt <- dt[, dissimilarity:=0.5*(sum(school_share_diff)), by=geo_scale]
 #  dt <- dt[black_tot==0, dissimilarity:=1]
 #  dt <- dt[white_tot==0, dissimilarity:=1]
   
   dt <- dt[, school_exposure_bw:=(BLACK/black_tot)*(WHITE/tot)]
   
-  dt <- dt[, exposure_bw:=sum(school_exposure_bw), by=shp_LEA]
+  dt <- dt[, exposure_bw:=sum(school_exposure_bw), by=geo_scale]
   dt <- dt[, school_exposure_wb:=(WHITE/white_tot)*(BLACK/tot)]
-  dt <- dt[, exposure_wb:=sum(school_exposure_wb), by=shp_LEA]
-  dt <- unique(dt[, .(shp_LEA, dissimilarity, exposure_bw, exposure_wb)])
+  dt <- dt[, exposure_wb:=sum(school_exposure_wb), by=geo_scale]
+  colnames <- c(geo_scale, 'YEAR', 'dissimilarity', 'exposure_bw', 'exposure_wb')
+  dt <- unique(dt[, colnames, with = FALSE])
   return(dt)
 }
