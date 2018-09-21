@@ -50,7 +50,16 @@ analyze_segregation_indices <- function(){
     dt_inds <- dt_inds[, year_count:=.N, by=shp_LEA]
     max_years <- max(dt_inds$year_count)
     
-    #dt_inds <- dt_inds[year_count==max_years]
+    
+    # Plot basic pictures
+    dt_inds_agg <- dt_inds[, .(YEAR = year, dissimilarity, exposure_bw, exposure_wb)]
+    dt_agg <- data.table(tidyr::gather(dt_inds_agg, key=measure, value=value , 2:4))
+    dt_agg <- dt_agg[, .(mean_value=mean(value)), by=.(YEAR, measure)]
+    ggplot2::ggplot(dt_agg, aes(x=YEAR, y=mean_value, group=measure, color=measure)) +
+      ggplot2::geom_line() +
+      ggtitle('School Segregation Measures by School District')
+    ggsave(file='~/Dropbox/pkg.data/nclb_segregation/plots/district_level_segregation_mean.pdf')
+        #dt_inds <- dt_inds[year_count==max_years]
     #dt_inds <- dt_inds[year_count > 15]
     
     dt_inds$year_count <- NULL
@@ -61,7 +70,7 @@ analyze_segregation_indices <- function(){
     dt <- dt[YEAR.LIFTED %in% 'NEVER RESTRICTED', LIFTED:='NEVER RESTRICTED']
     dt <- dt[!(YEAR.LIFTED %in% c('STILL OPEN', 'NEVER RESTRICTED')), int_year_lifted := as.numeric(YEAR.LIFTED)]
     
-    #districts_restricted_ever <- unique(dt[!is.na(int_year_lifted)]$LEAID)
+       #districts_restricted_ever <- unique(dt[!is.na(int_year_lifted)]$LEAID)
     districts_restricted_never <- unique(dt[YEAR.LIFTED %in% 'NEVER RESTRICTED']$LEAID)
     districts_released_1990 <- unique(dt[!is.na(int_year_lifted) & int_year_lifted < 1990]$LEAID)
     districts_released_1990_2000 <- unique(dt[!is.na(int_year_lifted) & int_year_lifted >= 1990 & int_year_lifted < 2000]$LEAID)
@@ -77,6 +86,7 @@ analyze_segregation_indices <- function(){
     l_out$histogram_year_restriction_lifts <- ggplot(unique(dt[!is.na(int_year_lifted), .(LEAID, int_year_lifted)]), aes(x=int_year_lifted)) +
       geom_histogram(binwidth = 1, color='grey') + 
       theme_bw()
+    print(l_out$histogram_year_restriction_lifts)
     
     l_out$lifted_stats <- (table(unique(dt[, .(LEAID, int_year_lifted, LIFTED)])$LIFTED))
     
