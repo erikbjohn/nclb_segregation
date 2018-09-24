@@ -2,20 +2,8 @@ analyze_segregation_indices <- function(){
   analyze_segregation_indices_location <- '~/Dropbox/pkg.data/nclb_segregation/Clean/analyze_segregation_indices.rds'
   if(!file.exists(analyze_segregation_indices_location)){
     l_schools <- get_schools()
-    l_inds <- create_segregation_indices()
+    dt_inds <- create_segregation_indices()
   
-    # First, examine overall trends
-    base_indices <- l_inds[[1]]
-    summary(l_inds[[1]]$dt_indices_base)
-    summary(l_inds[[11]]$dt_indices_base)
-    summary(l_inds[[11]]$dt_indices_same)
-    dissim_same <- sapply(l_inds, function(x) mean(x$dt_indices_same[!is.na(dissimilarity) & !is.infinite(dissimilarity)]$dissimilarity))
-    exposure_bw <- sapply(l_inds, function(x) mean(x$dt_indices_same[!is.na(exposure_bw) & !is.infinite(exposure_bw)]$exposure_bw))
-    exposure_wb <- sapply(l_inds, function(x) mean(x$dt_indices_same[!is.na(exposure_wb) & !is.infinite(exposure_wb)]$exposure_wb))
-    plot(dissim_same)
-    plot(exposure_bw)
-    plot(exposure_wb)
-    
     # Condition on school district release
     # Working....
     dt_releases_schools <- l_schools$dt[!is.na(YEAR.LIFTED)]
