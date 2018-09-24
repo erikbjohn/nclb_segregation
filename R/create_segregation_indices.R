@@ -22,7 +22,7 @@ create_segregation_indices <- function(){
     l_districts[[9]] <- list(sYear='9798', numYear = 1997, map=l_district_maps[[3]])
     l_districts[[10]] <- list(sYear='9798', numYear = 1998, map=l_district_maps[[3]])
 
-    l_districts[[11]] <- list(sYear='9900', numYear = 1990, map=l_district_maps[[4]])
+    l_districts[[11]] <- list(sYear='9900', numYear = 1999, map=l_district_maps[[4]])
     l_districts[[12]] <- list(sYear='9900', numYear = 2000, map=l_district_maps[[4]])
     
     l_districts[[13]] <- list(sYear='0102', numYear = 2001, map=l_district_maps[[5]])

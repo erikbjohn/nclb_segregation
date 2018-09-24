@@ -2,7 +2,7 @@ analyze_segregation_indices <- function(){
   analyze_segregation_indices_location <- '~/Dropbox/pkg.data/nclb_segregation/Clean/analyze_segregation_indices.rds'
   if(!file.exists(analyze_segregation_indices_location)){
     l_schools <- get_schools()
-    dt_inds <- create_segregation_indices()
+    dt_indices <- create_segregation_indices()
   
     # Condition on school district release
     # Working....
@@ -10,43 +10,41 @@ analyze_segregation_indices <- function(){
     dt_releases_districts <- unique(dt_releases_schools[, .(LEAID, LEAID.1989, YEAR, YEAR.LIFTED, LIFTED)])
     setkey(dt_releases_districts, LEAID, YEAR)
     
-    # Use only those that are in all years to ensure consistent sample
-    # Base geography
-    l_dt_inds <- list()
-    l_dt_inds$base <- rbindlist(lapply(l_inds, '[[', 3), use.names = TRUE, fill=TRUE)
-    l_dt_inds$base$year_base <- NULL
-    l_dt_inds$base$boundaries <- 'consistent'
     
-    l_dt_inds$current <- rbindlist(lapply(l_inds, '[[', 4), use.names = TRUE, fill=TRUE)
-    l_dt_inds$current$boundaries <- 'contemporary'
+    # Drop indices with NA
+    dt_indices <- dt_indices[!is.na(index_dissimilarity) & !is.na(index_exposure_bw) & !is.na(index_exposure_wb) & !is.na(index_finnegan)]
+    dt_indices <- dt_indices[!is.infinite(index_dissimilarity) & !is.infinite(index_exposure_bw) & !is.infinite(index_exposure_wb)]
     
-    dt_inds <- rbindlist(l_dt_inds, use.names=TRUE, fill=TRUE)
-    
-    # Weird indices
-    indices_lea <- unique(dt_inds$shp_LEA)
-    schools_lea <- unique(l_schools$dt$LEAID)
-    
-    indices_lea[which(!(indices_lea %in% schools_lea))]
-    dt_inds[shp_LEA %in% indices_lea]
-    length(indices_lea[which(!(indices_lea %in% schools_lea))])
-    
-    schools_lea[which(!(schools_lea %in% indices_lea))]
-    length(schools_lea[which(!(schools_lea %in% indices_lea))])
-    
-    dt_inds <- dt_inds[!is.na(dissimilarity) & !is.na(exposure_bw) & !is.na(exposure_wb)]
-    dt_inds <- dt_inds[!is.infinite(dissimilarity) & !is.infinite(exposure_bw) & !is.infinite(exposure_wb)]
-    dt_inds <- dt_inds[, year_count:=.N, by=shp_LEA]
+    # Collapse to spatial aggregation level
+    dt_inds <- unique(dt_indices[, .(YEAR, index_geo_year, index_geo_scale, index_geo_id, 
+                                     index_dissimilarity, index_exposure_bw, index_exposure_wb, index_finnegan)])
+    dt_inds <- dt_inds[,year_count:=.N, by= c('index_geo_year', 'index_geo_scale', 'index_geo_id')]
     max_years <- max(dt_inds$year_count)
     
-    
     # Plot basic pictures
-    dt_inds_agg <- dt_inds[, .(YEAR = year, dissimilarity, exposure_bw, exposure_wb)]
-    dt_agg <- data.table(tidyr::gather(dt_inds_agg, key=measure, value=value , 2:4))
-    dt_agg <- dt_agg[, .(mean_value=mean(value)), by=.(YEAR, measure)]
-    ggplot2::ggplot(dt_agg, aes(x=YEAR, y=mean_value, group=measure, color=measure)) +
+    dt_inds_agg <- dt_inds[, .(YEAR, index_geo_year, index_geo_scale,
+                               index_dissimilarity, index_exposure_bw, 
+                               index_exposure_wb, index_finnegan)]
+    dt_agg <- data.table(tidyr::gather(dt_inds_agg, key=measure, value=value , 4:7))
+    dt_agg <- dt_agg[, .(mean_value=mean(value)), by=.(YEAR, index_geo_year, index_geo_scale, measure)]
+    ggplot2::ggplot(dt_agg[index_geo_scale=='CNTYFIPS'], aes(x=YEAR, y=mean_value, group=measure, color=measure)) +
       ggplot2::geom_line() +
-      ggtitle('School Segregation Measures by School District')
-    ggsave(file='~/Dropbox/pkg.data/nclb_segregation/plots/district_level_segregation_mean.pdf')
+      ggtitle('School Segregation Measures by County')
+    ggsave(file='~/Dropbox/pkg.data/nclb_segregation/plots/county_level_segregation_mean.pdf')
+    
+    ggplot2::ggplot(dt_agg[index_geo_year == 'contemp'], aes(x=YEAR, y=mean_value, group=measure, color=measure)) +
+      ggplot2::geom_line() +
+      ggtitle('School Segregation Measures: \n Contemporaneous School District Boundary')
+    ggsave(file='~/Dropbox/pkg.data/nclb_segregation/plots/school_district_segregation_contemporaneous_mean.pdf')
+    
+    ggplot2::ggplot(dt_agg[index_geo_year == 'base_year'], aes(x=YEAR, y=mean_value, group=measure, color=measure)) +
+      ggplot2::geom_line() +
+      ggtitle('School Segregation Measures: \n 1989 School District Boundary')
+    ggsave(file='~/Dropbox/pkg.data/nclb_segregation/plots/school_district_segregation_1989_boundaries_mean.pdf')
+    
+    
+    ## Begin analysis here
+    
         #dt_inds <- dt_inds[year_count==max_years]
     #dt_inds <- dt_inds[year_count > 15]
     

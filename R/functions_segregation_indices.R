@@ -43,7 +43,7 @@ functions_segregation_indices <- function(dt, map_year, geo_scale){
   dt <- dt[, share_white := white_tot/tot]
   dt <- dt[, share_black := black_tot/tot]
   
-  dt <- dt[, index_finnegan := (index_exposure_bw-share_white)/share_white]
+  dt <- dt[, index_finnegan := (index_exposure_bw)/share_white]
 
   dt$index_geo_scale <- geo_scale
   dt$index_geo_id <- dt[, geo_scale, with=FALSE]
