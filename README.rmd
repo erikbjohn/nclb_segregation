@@ -12,13 +12,12 @@ library(sp)
 library(rgdal)
 library(ggplot2)
 library(stringr)
-source('R/analyze_segregation_indices.R')
-source('R/create_secessions.R')
-source('R/create_segregation_indices.R')
-source('R/functions_segregation_indices.R')
-source('R/get_district_maps.R')
-source('R/get_proj_env.R')
-source('R/get_schools.R')
+library(readstata13)
+library(maps)
+#library(tabulizer) Only needed for nclb scrape
+library(RCurl)
+source_list <- list.files('R', include.dirs = TRUE, full.names = TRUE)
+l_source <- lapply(source_list, source)
 ```
 
 ## R Markdown

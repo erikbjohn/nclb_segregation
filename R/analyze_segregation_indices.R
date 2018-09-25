@@ -20,6 +20,7 @@ analyze_segregation_indices <- function(){
                                      index_dissimilarity, index_exposure_bw, index_exposure_wb, index_finnegan)])
     dt_inds <- dt_inds[,year_count:=.N, by= c('index_geo_year', 'index_geo_scale', 'index_geo_id')]
     max_years <- max(dt_inds$year_count)
+   #dt_inds <- dt_inds[year_count==max_years]
     
     # Plot basic pictures
     dt_inds_agg <- dt_inds[, .(YEAR, index_geo_year, index_geo_scale,
@@ -49,9 +50,9 @@ analyze_segregation_indices <- function(){
     #dt_inds <- dt_inds[year_count > 15]
     
     dt_inds$year_count <- NULL
-    setkey(dt_inds, shp_LEA, year)
-    
+    setkey(dt_inds, index_geo_id, YEAR)
     dt <- dt_releases_districts[dt_inds]
+    dt <- dt[!is.na(LEAID)]
     dt <- dt[is.na(YEAR.LIFTED), YEAR.LIFTED:='NEVER RESTRICTED']
     dt <- dt[YEAR.LIFTED %in% 'NEVER RESTRICTED', LIFTED:='NEVER RESTRICTED']
     dt <- dt[!(YEAR.LIFTED %in% c('STILL OPEN', 'NEVER RESTRICTED')), int_year_lifted := as.numeric(YEAR.LIFTED)]
@@ -73,54 +74,64 @@ analyze_segregation_indices <- function(){
       geom_histogram(binwidth = 1, color='grey') + 
       theme_bw()
     print(l_out$histogram_year_restriction_lifts)
+    ggsave(file='~/Dropbox/pkg.data/nclb_segregation/plots/histogramOfReleases.pdf')
     
     l_out$lifted_stats <- (table(unique(dt[, .(LEAID, int_year_lifted, LIFTED)])$LIFTED))
     
     # Plot all districts with contemporary boundary calculations
     l_dts_contemp <- list()
     
-    l_dts_contemp$restricted_never <- dt[LEAID %in% districts_restricted_never & boundaries %in% 'contemporary',
-                                         .(dissimilarity=mean(dissimilarity),
-                                           exposure_bw=mean(exposure_bw), 
-                                           exposure_wb=mean(exposure_wb),
+    l_dts_contemp$restricted_never <- dt[LEAID %in% districts_restricted_never & index_geo_year %in% 'contemp',
+                                         .(dissimilarity=mean(index_dissimilarity),
+                                           exposure_bw=mean(index_exposure_bw), 
+                                           exposure_wb=mean(index_exposure_wb),
+                                           finnegan = mean(index_finnegan),
                                            sample_type='restricted never'),
                                          by=YEAR]
     
-    l_dts_contemp$released_1990 <- dt[LEAID %in% districts_released_1990 & boundaries %in% 'contemporary'][, .(dissimilarity=mean(dissimilarity),
-                                                                      exposure_bw=mean(exposure_bw), 
-                                                                      exposure_wb=mean(exposure_wb),
-                                                                      sample_type='released < 1990'),
-                                                                  by=YEAR]
+    l_dts_contemp$released_1990 <- dt[LEAID %in% districts_released_1990 & index_geo_year %in% 'contemp'][,
+                                                                                                          .(dissimilarity=mean(index_dissimilarity),
+                                                                                                            exposure_bw=mean(index_exposure_bw), 
+                                                                                                            exposure_wb=mean(index_exposure_wb),
+                                                                                                            sample_type='released < 1990'),
+                                                                                                          by=YEAR]
     
-    l_dts_contemp$released_1990_2000 <- dt[LEAID %in% districts_released_1990_2000 & boundaries %in% 'contemporary'][, .(dissimilarity=mean(dissimilarity),
-                                                                                exposure_bw=mean(exposure_bw), 
-                                                                                exposure_wb=mean(exposure_wb),
-                                                                                sample_type='released 1990 - 2000'),
-                                                                            by=YEAR]
+    l_dts_contemp$released_1990_2000 <- dt[LEAID %in% districts_released_1990_2000 & index_geo_year %in% 'contemp'][,
+                                                                                                                    .(dissimilarity=mean(index_dissimilarity),
+                                                                                                                      exposure_bw=mean(index_exposure_bw), 
+                                                                                                                      exposure_wb=mean(index_exposure_wb),
+                                                                                                                      sample_type='released 1990 - 2000'),
+                                                                                                                    by=YEAR]
     
-    l_dts_contemp$released_2000_2010 <- dt[LEAID %in% districts_released_2000_2010 & boundaries %in% 'contemporary'][, .(dissimilarity=mean(dissimilarity),
-                                                                                exposure_bw=mean(exposure_bw), 
-                                                                                exposure_wb=mean(exposure_wb),
-                                                                                sample_type='released 2000 - 2010'),
-                                                                            by=YEAR]
+    l_dts_contemp$released_2000_2010 <- dt[LEAID %in% districts_released_2000_2010 & index_geo_year %in% 'contemp'][, 
+                                                                                                                    .(dissimilarity=mean(index_dissimilarity),
+                                                                                                                      exposure_bw=mean(index_exposure_bw), 
+                                                                                                                      exposure_wb=mean(index_exposure_wb),
+                                                                                                                      sample_type='released 2000 - 2010'),
+                                                                                                                    by=YEAR]
  
       
     dt_plots <- rbindlist(l_dts_contemp, use.names = TRUE, fill=TRUE)  
 
-    l_out$Dissimilarity_contemporary <- ggplot2::ggplot(dt_plots, aes(x=YEAR, y=dissimilarity, group=sample_type, color=sample_type)) + 
+    l_out$Dissimilarity_contemporary <- ggplot2::ggplot(dt_plots[as.numeric(YEAR)>1989], aes(x=YEAR, y=dissimilarity, group=sample_type, color=sample_type)) + 
       geom_line() + 
-      ggtitle('Dissimilarity')
+      ggtitle('Dissimilarity - Contemporary Boundaries')
     print(l_out$Dissimilarity_contemporary)
+    ggsave(file='~/Dropbox/pkg.data/nclb_segregation/plots/Dissimilarity_contemporary_boundaries_byReleaseDate.pdf')
     
-    l_out$ExposureBW_contemporary <- ggplot2::ggplot(dt_plots, aes(x=YEAR, y=exposure_bw, group=sample_type, color=sample_type)) + 
+    
+    l_out$ExposureBW_contemporary <- ggplot2::ggplot(dt_plots[as.numeric(YEAR)>1989], aes(x=YEAR, y=exposure_bw, group=sample_type, color=sample_type)) + 
       geom_line() + 
       ggtitle('Exposure BW')
     print(l_out$ExposureBW_contemporary)
+    ggsave(file='~/Dropbox/pkg.data/nclb_segregation/plots/ExposureBW_contemporary_boundaries_byReleaseDate.pdf')
     
-    l_out$ExposureWB_contemporary <- ggplot2::ggplot(dt_plots, aes(x=YEAR, y=exposure_wb, group=sample_type, color=sample_type)) + 
+    
+    l_out$ExposureWB_contemporary <- ggplot2::ggplot(dt_plots[as.numeric(YEAR)>1989], aes(x=YEAR, y=exposure_wb, group=sample_type, color=sample_type)) + 
       geom_line() + 
       ggtitle('Exposure WB')
     print(l_out$ExposureWB_contemporary)
+    ggsave(file='~/Dropbox/pkg.data/nclb_segregation/plots/ExposureWB_contemporary_boundaries_byReleaseDate.pdf')
     
     # Examine segregation using a consistent base year boundary
     dt_plots <- dt[,.(dissimilarity=mean(dissimilarity),
