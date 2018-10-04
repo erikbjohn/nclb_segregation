@@ -19,9 +19,9 @@ get_nclb <- function(){
     dt_files <- dt_files[, N:=.N, by=cols]
     dt_files <- tidyr::spread(dt_files, f_name, cols_example, fill='')
     dt_files <- dt_files[order(N, decreasing = TRUE)]
-    View(dt_files)
+    #View(dt_files)
     
-
+    
     # Start with fixing/assigning the ncessch codes
     for(i_file in 1:length(l_nclb)){
       f_year <- names(l_nclb)[i_file]
@@ -33,8 +33,8 @@ get_nclb <- function(){
         dt_clean$NCESSCH <- as.character()
         schools_06 <- schools$dt[YEAR %in% '2006']
         dt_clean <- functions_nclb_sy0506_NCESSCH(dt_clean, schools_06)
-        
-      if(f_year %in% c('sy1516s'){
+      }
+      if(f_year %in% c('sy1516s')){
         dt_clean <- dt_clean[,NCESSCH:=as.character(School_NCES_ID_Code)]
         dt_clean <- dt_clean[,LEAID:=as.character(LEA_NCES_ID)]
         table(dt_clean[, .(State, School_Improvement_Status)])
@@ -42,7 +42,6 @@ get_nclb <- function(){
         table(dt_clean[, .(State, School_Title_I_School_Status)])
       }
     }
-    
     saveRDS(nclb, nclb_location)
   } else {
     nclb <- readRDS(nclb_location)
