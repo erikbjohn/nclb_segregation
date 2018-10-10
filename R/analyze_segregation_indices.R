@@ -60,6 +60,7 @@ analyze_segregation_indices <- function(){
        #districts_restricted_ever <- unique(dt[!is.na(int_year_lifted)]$LEAID)
     districts_restricted_never <- unique(dt[YEAR.LIFTED %in% 'NEVER RESTRICTED']$LEAID)
     districts_restricted_still_open <- unique(dt[YEAR.LIFTED %in% 'STILL OPEN']$LEAID)
+    districts_released_ever <- unique(dt[!is.na(int_year_lifted)]$LEAID)
     districts_released_1990 <- unique(dt[!is.na(int_year_lifted) & int_year_lifted < 1990]$LEAID)
     districts_released_2000 <- unique(dt[!is.na(int_year_lifted) & int_year_lifted < 2000]$LEAID)
     districts_released_1990_2000 <- unique(dt[!is.na(int_year_lifted) & int_year_lifted >= 1990 & int_year_lifted < 2000]$LEAID)
@@ -98,32 +99,38 @@ analyze_segregation_indices <- function(){
                                            sample_type='restricted never'),
                                          by=YEAR]
     
-    l_dts_contemp$released_2000 <- dt_plot[LEAID %in% districts_released_2000 &
-                                                index_geo_year %in% 'contemp'][,.(dissimilarity=mean(index_dissimilarity),
-                                                                                  exposure_bw=mean(index_exposure_bw), 
-                                                                                  exposure_wb=mean(index_exposure_wb),
-                                                                                  sample_type='released < 2000'),
-                                                                               by=YEAR]
-    #l_dts_contemp$released_1990_2000 <- dt_plot[LEAID %in% districts_released_1990_2000 &
+    # l_dts_contemp$released_2000 <- dt_plot[LEAID %in% districts_released_2000 &
+    #                                             index_geo_year %in% 'contemp'][,.(dissimilarity=mean(index_dissimilarity),
+    #                                                                               exposure_bw=mean(index_exposure_bw), 
+    #                                                                               exposure_wb=mean(index_exposure_wb),
+    #                                                                               sample_type='released < 2000'),
+    #                                                                            by=YEAR]
+    # #l_dts_contemp$released_1990_2000 <- dt_plot[LEAID %in% districts_released_1990_2000 &
     #                                                 index_geo_year %in% 'contemp'][,.(dissimilarity=mean(index_dissimilarity),
     #                                                                                   exposure_bw=mean(index_exposure_bw), 
     #                                                                                   exposure_wb=mean(index_exposure_wb),
     #                                                                                   sample_type='released 1990 - 2000'),
     #                                                                                by=YEAR]
-    l_dts_contemp$released_2000_2010 <- dt_plot[LEAID %in% districts_released_2000_2010 &
-                                                     index_geo_year %in% 'contemp'][, .(dissimilarity=mean(index_dissimilarity),
-                                                                                        exposure_bw=mean(index_exposure_bw), 
-                                                                                        exposure_wb=mean(index_exposure_wb),
-                                                                                        sample_type='released 2000 - 2010'),
-                                                                                    by=YEAR]
-    
+    # l_dts_contemp$released_2000_2010 <- dt_plot[LEAID %in% districts_released_2000_2010 &
+    #                                                  index_geo_year %in% 'contemp'][, .(dissimilarity=mean(index_dissimilarity),
+    #                                                                                     exposure_bw=mean(index_exposure_bw), 
+    #                                                                                     exposure_wb=mean(index_exposure_wb),
+    #                                                                                     sample_type='released 2000 - 2010'),
+    #                                                                                 by=YEAR]
+    # 
     l_dts_contemp$restricted_still_open <- dt_plot[LEAID %in% districts_restricted_still_open &
                                              index_geo_year %in% 'contemp'][, .(dissimilarity=mean(index_dissimilarity),
-                                                                                exposure_bw=mean(index_exposure_bw), 
+                                                                                exposure_bw=mean(index_exposure_bw),
                                                                                 exposure_wb=mean(index_exposure_wb),
                                                                                 sample_type='restricted - still open'),
                                                                             by=YEAR]
- 
+    l_dts_contemp$released <- dt_plot[LEAID %in% districts_released_ever &
+                                                     index_geo_year %in% 'contemp'][, .(dissimilarity=mean(index_dissimilarity),
+                                                                                        exposure_bw=mean(index_exposure_bw), 
+                                                                                        exposure_wb=mean(index_exposure_wb),
+                                                                                        sample_type='released - ever'),
+                                                                                    by=YEAR]
+    
     dt_plots <- rbindlist(l_dts_contemp, use.names = TRUE, fill=TRUE)  
 
     l_out$Dissimilarity_contemporary <- ggplot2::ggplot(dt_plots[as.numeric(YEAR)>1989], aes(x=YEAR, y=dissimilarity, group=sample_type, color=sample_type)) + 
