@@ -28,5 +28,5 @@ Data for the NCLB presentation
 
 ```{r eval=TRUE, echo=FALSE}
 secessions <- get_secessions()
-
+View(secessions[secession_id==5])
 ```

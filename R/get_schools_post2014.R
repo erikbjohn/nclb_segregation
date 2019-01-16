@@ -1,12 +1,54 @@
-get_schools <- function(){
-  schools_location <- '~/Dropbox/pkg.data/nclb_segregation/Clean/schools.rds'
+get_schools_post2014 <- function(){
+  schools_post2014_location <- '~/Dropbox/pkg.data/nclb_segregation/Clean/schools_post2014.rds'
   
   ### NEED 2015-2018 HERE:https://nces.ed.gov/ccd/pubschuniv.asp
   
-  if(!file.exists(schools_location)){
+  if(!file.exists(schools_post2014_location)){
     # Schools locations
     proj_env <- get_proj_env()
-    schools <- readRDS('~/Dropbox/pkg.data/nclb_segregation/Clean/ejData_never_delete_me.rds')
+    schools_old <- readRDS('~/Dropbox/pkg.data/nclb_segregation/Clean/ejData_never_delete_me.rds')
+    schools_old <- schools_old[, NCESSCH:=as.character(NCESSCH)]
+    
+    #l_schools_new <- fread('~/Dropbox/pkg.data/nclb_segregation/SchoolData/')
+    #2014-2015
+    s_1415_mem <- fread('~/Dropbox/pkg.data/nclb_segregation/SchoolData/ccd_sch_052_1415_w_0216161a.txt')  # Membership
+    s_1415_mem <- s_1415_mem[, NCESSCH:=as.character(NCESSCH)]
+    setkey(s_1415_mem, NCESSCH)
+    s_1415_geo <- as.data.table(readxl::read_xlsx('~/Dropbox/pkg.data/nclb_segregation/SchoolData/EDGE_GEOIDS_201415_PUBLIC_SCHOOL_xlsx.xlsx'))
+    s_1415_geo <- s_1415_geo[, NCESSCH:=as.character(NCESSCH)]
+    setkey(s_1415_geo, NCESSCH)
+    s_1415_dir <- fread('~/Dropbox/pkg.data/nclb_segregation/SchoolData/ccd_sch_029_1415_w_0216601a.txt')
+    s_1415_dir <- s_1415_dir[,NCESSCH:=as.character(NCESSCH)]
+    setkey(s_1415_dir, NCESSCH)
+    s_1415_char <- fread('~/Dropbox/pkg.data/nclb_segregation/SchoolData/ccd_sch_059_1516_w_2a_011717.csv')
+    s_1415_char <- s_1415_char[, NCESSCH:=as.character(NCESSCH)]
+    setkey(s_1415_char, NCESSCH)
+    s_1415_staff <- fread('~/Dropbox/pkg.data/nclb_segregation/SchoolData/ccd_sch_059_1415_w_0216161a.txt')
+    s_1415_staff <- s_1415_staff[, NCESSCH:=as.character(NCESSCH)]
+    setkey(s_1415_staff, NCESSCH)
+    
+    s_1415 <- s_1415_geo[s_1415_mem]
+    s_1415 <- s_1415_dir[s_1415]
+    s_1415 <- s_1415_char[s_1415]
+    s_1415 <- s_1415_staff[s_1415]
+    
+    s_1415 <- s_1415[, .(LEAID, NCESSCH, 
+                         BESTLAT = LATCODE, BESTLON = LONGCODE,
+                         FTE, GSHI, GSLO, PHONE, SCHNO=SCHID,
+                         TYPE = SCH_TYPE, STATUS = SY_STATUS,
+                         ASIAN = AS, BLACK=BL, HISP = HI,
+                         G01, G02, G03, G04, G05, G06,
+                         G07, G08, G09, G10, G11, G12, KG,
+                         LEANM = LEA_NAME, MEMBER, PK, 
+                         SCHNAM = SCH_NAME, SEASCH = ST_SCHID,
+                         STID = ST_LEAID, WHITE = WH, YEAR = 2015
+    )]
+    
+    
+    
+    
+    
+    
     # Remove multiple records for 2006
     setkey(schools, YEAR, LEAID, NCESSCH)
     # Delete duplicate records

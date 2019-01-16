@@ -12,7 +12,7 @@ functions_segregation_indices <- function(dt, map_year, geo_scale){
   dt <- dt[!is.na(WHITE)]
   dt <- dt[!is.na(geo_scale)]
   dt <- dt[, black_tot := sum(BLACK), by=geo_scale]
-  dt <- dt[, white_tot := sum(WHITE), by=geo_scale]
+  dt <- dt[, white_tot := sum(WHITE), by=c(geo_scale)]
   dt <- dt[, tot := black_tot + white_tot]
   
   # Dissimilarity Index
