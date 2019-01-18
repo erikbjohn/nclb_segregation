@@ -15,7 +15,7 @@ get_schools_post2014 <- function(){
     s_1415_mem <- s_1415_mem[, NCESSCH:=as.character(NCESSCH)]
     setkey(s_1415_mem, NCESSCH)
     s_1415_geo <- as.data.table(readxl::read_xlsx('~/Dropbox/pkg.data/nclb_segregation/SchoolData/EDGE_GEOIDS_201415_PUBLIC_SCHOOL_xlsx.xlsx'))
-    s_1415_geo <- s_1415_geo[, NCESSCH:=as.character(NCESSCH)]
+    s_1415_geo <- s_1415_geo[, NCESSCH:=as.character(as.numeric(NCESSCH))]
     setkey(s_1415_geo, NCESSCH)
     s_1415_dir <- fread('~/Dropbox/pkg.data/nclb_segregation/SchoolData/ccd_sch_029_1415_w_0216601a.txt')
     s_1415_dir <- s_1415_dir[,NCESSCH:=as.character(NCESSCH)]
@@ -41,11 +41,163 @@ get_schools_post2014 <- function(){
                          G07, G08, G09, G10, G11, G12, KG,
                          LEANM = LEA_NAME, MEMBER, PK, 
                          SCHNAM = SCH_NAME, SEASCH = ST_SCHID,
-                         STID = ST_LEAID, WHITE = WH, YEAR = 2015
-    )]
+                         STID = ST_LEAID, WHITE = WH, YEAR = 2015)]
+    
+    # 2015-2016 data
+    s_1516_files  <- list.files('~/Dropbox/pkg.data/nclb_segregation/SchoolData/s_1516',recursive = TRUE, full.names = TRUE)
+    s_1516_csvs <- s_1516_files[stringr::str_detect(s_1516_files, '\\.csv$')]
+    l_s_1516 <- lapply(s_1516_csvs, fread)
+    lapply(l_s_1516, function(x) setkey(x, NCESSCH))
+    dt <- l_s_1516[[1]]
+    for(i_dt in 1:(length(l_s_1516)-1)){
+      dt_ind <- i_dt+1
+      dt_new <- l_s_1516[[dt_ind]]
+      dt <- dt_new[dt]
+    }
+    s_1516 <- dt
+    rm(dt)
+    s_1516 <- s_1516[, NCESSCH:=as.character(NCESSCH)]
+    setkey(s_1516, NCESSCH)
+    s_1516_geo <- as.data.table(readxl::read_xlsx('~/Dropbox/pkg.data/nclb_segregation/SchoolData/s_1516/EDGE_GEOCODE_PUBLICSCH_1516/EDGE_GEOCODE_PUBLICSCH_1516.xlsx'))
+    s_1516_geo <- s_1516_geo[, NCESSCH:=as.character(as.numeric(NCESSCH))]
+    setkey(s_1516_geo, NCESSCH)
+    s_1516 <- s_1516_geo[s_1516]
+    
+    s_1516 <- s_1516[, .(LEAID, #
+                         NCESSCH, #
+                         BESTLAT = LAT1516, #
+                         BESTLON = LON1516, #
+                         LEAID.1989 = NA,
+                         TOTETH = TOTAL, #
+                         FTE, #
+                         GSHI,  #
+                         GSLO, # 
+                         PHONE, # 
+                         SCHNO = SCHID, # 
+                         TYPE = SCH_TYPE, # 
+                         STATUS = SY_STATUS, # 
+                         ASIAN = AS, # 
+                         BLACK  = BL, # 
+                         HISP = HI, # 
+                         G01, G02, G03, G04, G05, G06, #
+                         G07, G08, G09, G10, G11, G12,  #
+                         KG, #
+                         LEANM = LEA_NAME, #
+                         MEMBER,  #
+                         PK,  # 
+                         SCHNAM = SCH_NAME, #
+                         SEASCH = ST_SCHID, #
+                         STID = ST_LEAID, #
+                         WHITE = WH, #
+                         UG, #
+                         YEAR.LIFTED = NA,
+                         LIFTED = NA,
+                         YEAR = 2016)]
+    
+    
+    s_1617_files  <- list.files('~/Dropbox/pkg.data/nclb_segregation/SchoolData/s_1617',recursive = TRUE, full.names = TRUE)
+    s_1617_csvs <- s_1617_files[stringr::str_detect(s_1617_files, '\\.csv$')]
+    l_s_1617 <- lapply(s_1617_csvs, fread)
+    
+    dt_lunch_work <- l_s_1617[[2]]
+    dt_lunch_work <- unique(dt_lunch_work[DATA_GROUP %in% 'Direct Certification', .(NCESSCH, LUNCH=STUDENT_COUNT)])
+    setkey(dt_lunch_work, NCESSCH)
+    l_s_1617[[2]] <- dt_lunch_work
+    
+    dt_mem_work <- l_s_1617[[3]]
+    dt_grades <- dt_mem_work[RACE_ETHNICITY %in% 'No Category Codes' &
+                                    SEX %in% 'No Category Codes' &
+                                    grepl('Grade|Kinderga|Ungraded', GRADE), .(NCESSCH, GRADE, STUDENT_COUNT)]
+    dt_grades <- dt_grades[, GRADE:=stringr::str_replace(GRADE, 'Grade ', 'G')]
+    dt_grades <- dt_grades[GRADE=='Kindergarten', GRADE:='KG']
+    dt_grades <- dt_grades[GRADE=='Pre-Kindergarten', GRADE:='PK']
+    dt_grades <- dt_grades[GRADE=='Ungraded', GRADE:='UG']
+    dt_grades <- tidyr::spread(dt_grades, GRADE, STUDENT_COUNT)
+    dt_grades <- as.data.table(dt_grades)
+    
+    dt_member <- dt_mem_work[RACE_ETHNICITY %in% 'No Category Codes' &
+                               SEX %in% 'No Category Codes' &
+                               GRADE %in% 'No Category Codes' &
+                             TOTAL_INDICATOR %in% 'Derived - Education Unit Total minus Adult Education Count',
+                             .(NCESSCH, MEMBER = STUDENT_COUNT)]
+    setkey(dt_member, NCESSCH)
+    
+    dt_race <- dt_mem_work[GRADE %in% 'No Category Codes' &
+                             grepl('Black|Hispanic|White|Asian|Pacific|Indian|Two or more', RACE_ETHNICITY),
+                           .(STUDENT_COUNT = sum(STUDENT_COUNT)),
+                           by=.(NCESSCH, RACE_ETHNICITY)]
+    dt_race <- tidyr::spread(dt_race, RACE_ETHNICITY, STUDENT_COUNT)
+    dt_race <- as.data.table(dt_race)
+    setnames(dt_race, names(dt_race), c('NCESSCH', 'AM', 'ASIAN', 'BLACK', 'HISP', 'HP', 'TR', 'WHITE'))
+    dt_race <- dt_race[, TOTETH := rowSums(.SD, na.rm=TRUE), .SDcols= c('AM', 'ASIAN', 'BLACK', 'HISP', 'WHITE', 'HP', 'TR', 'WHITE')]
+    dt_race <- dt_race[, .(NCESSCH, ASIAN, BLACK, HISP, WHITE, TOTETH)]
+    
+    setkey(dt_grades, NCESSCH)
+    setkey(dt_race, NCESSCH)
+    setkey(dt_member, NCESSCH)
+    dt_grades_race <- dt_grades[dt_race]
+    l_s_1617[[3]] <- dt_member[dt_grades_race]
+    
+    lapply(l_s_1617, function(x) setkey(x, NCESSCH))
+    dt <- l_s_1617[[1]] # Largest file
+    for(i_dt in 1:(length(l_s_1617)-1)){
+      dt_ind <- i_dt+1
+      dt_new <- l_s_1617[[dt_ind]]
+      dt <- dt_new[dt]
+    }
+    s_1617 <- dt
+    rm(dt)
+    s_1617 <- s_1617[, NCESSCH:=as.character(NCESSCH)]
+    setkey(s_1617, NCESSCH)
+  s_1617_geo <- as.data.table(readxl::read_xlsx('~/Dropbox/pkg.data/nclb_segregation/SchoolData/s_1617/EDGE_GEOCODE_PUBLICSCH_1617/EDGE_GEOCODE_PUBLICSCH_1617.xlsx'))
+    s_1617_geo <- s_1617_geo[, NCESSCH:=as.character(as.numeric(NCESSCH))]
+    setkey(s_1617_geo, NCESSCH)
+    s_1617 <- s_1617_geo[s_1617]
+    
+    s_1617 <- s_1617[, .(LEAID, #
+                         NCESSCH, #
+                         BESTLAT = LAT, #
+                         BESTLON = LON, #
+                         LEAID.1989 = NA,
+                         TOTETH, #
+                         FTE = TEACHERS,#
+                         GSHI,  #
+                         GSLO, # 
+                         PHONE, # 
+                         SCHNO = SCHID, # 
+                         TYPE = SCH_TYPE, # 
+                         STATUS = SY_STATUS, # 
+                         ASIAN, # 
+                         BLACK, # 
+                         HISP, # 
+                         G01 = G1,
+                         G02 = G2,
+                         G03 = G3,
+                         G04 = G4,
+                         G05 = G5,
+                         G06 = G6, #
+                         G07 = G7,
+                         G08 = G8,
+                         G09 = G9,
+                         G10,
+                         G11,
+                         G12,  #
+                         KG, #
+                         LEANM = LEA_NAME, #
+                         MEMBER,  #
+                         PK,  # 
+                         SCHNAM = SCH_NAME, #
+                         SEASCH = ST_SCHID, #
+                         STID = ST_LEAID, #
+                         WHITE, #
+                         UG = NA, #
+                         YEAR.LIFTED = NA,
+                         LIFTED = NA,
+                         YEAR = 2017)]
     
     
     
+    #----------------#
     
     
     
