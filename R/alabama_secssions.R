@@ -3,9 +3,11 @@ alabama_secessions <- function(){
   al_secessions <- secessions[state_name=='Alabama' & !is.na(secession_year) & !is.na(seceding_district_ncesid)]
   segregation <- create_segregation_indices()
   schools <- get_schools()
+  schools_post2014 <- get_schools_post2014()
   districts <- get_district_maps()
   dt_secessions <- data.table()
-  for(i_secession in 3:nrow(al_secessions)){
+  districts_17 <- rgdal::readOGR('~/Downloads', 'cb_2017_01_unsd_500k', stringsAsFactors = FALSE)
+  for(i_secession in 1:nrow(al_secessions)){
     cat(i_secession)
     l_outcomes <- list()
     secess_year <- al_secessions[i_secession]$secession_year
@@ -40,6 +42,7 @@ alabama_secessions <- function(){
     # Map schools into
     before_year <- l_outcomes$segs_from_before$YEAR
     after_year <- l_outcomes$segs_new$YEAR
+   
     dist_shp <- districts_17
     dist_shp <- dist_shp[dist_shp@data$STATEFP %in% '01',]
     dist_shp <- dist_shp[dist_shp@data$GEOID %in% secess_new_ncesid, ]

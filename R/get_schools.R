@@ -7,6 +7,12 @@ get_schools <- function(){
     # Schools locations
     proj_env <- get_proj_env()
     schools <- readRDS('~/Dropbox/pkg.data/nclb_segregation/Clean/ejData_never_delete_me.rds')
+    source('R/get_schools_post2014.R')
+    schools_post2014 <- get_schools_post2014()
+    
+    # TRY AND bind the schools and schools_post2014 data
+    
+    
     # Remove multiple records for 2006
     setkey(schools, YEAR, LEAID, NCESSCH)
     # Delete duplicate records
