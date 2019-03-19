@@ -11,7 +11,13 @@ get_schools <- function(){
     schools_post2014 <- get_schools_post2014()
     
     # TRY AND bind the schools and schools_post2014 data
+    schools$IFTE <- NULL
+    schools$IMEMB <- NULL
     
+    #names_old <- names(schools)
+    #names_post14 <- names(schools_post2014)
+    #names_old[!(names_old %in% names_post14)]
+    #names_post14[!(names_post14 %in% names_old)]
     
     # Remove multiple records for 2006
     setkey(schools, YEAR, LEAID, NCESSCH)
@@ -23,6 +29,9 @@ get_schools <- function(){
     schools <- schools[!(is.na(BESTLAT))]
     schools <- schools[BESTLAT>18]
     schools <- schools[, NCESSCH := as.character(NCESSCH)]
+    
+    # Join to post 14 school data
+    schools <- rbindlist(list(schools, schools_post2014), use.names = TRUE, fill=TRUE)
     
     # Data check on black white
     # Clean data
@@ -159,6 +168,83 @@ get_schools <- function(){
     nrow(schools[(WHITE < white_low | WHITE > white_high) & white_mean > 50])
     schools <- schools[(WHITE < white_low | WHITE > white_high) & white_mean > 50, WHITE:=white_lead]
     nrow(schools[(WHITE < white_low | WHITE > white_high) & white_mean > 50])
+    
+    # Clean up all post 2014 stuff such as lifted and georeferencing
+    
+    ## Clean up georeferencing for 2015 and 2016 years
+    na_num <-1
+    iter <- 0
+    setkey(schools, NCESSCH, YEAR)
+    while(iter < 4 & na_num > 0){
+      iter <- iter + 1
+      cat(iter, '\n')
+      schools <- schools[, lagLat := shift(BESTLAT, iter, type='lag'), by=NCESSCH]
+      schools <- schools[, lagLon := shift(BESTLON, iter, type='lag'), by=NCESSCH]
+      schools <- schools[is.na(BESTLAT), BESTLAT:=lagLat]
+      schools <- schools[is.na(BESTLON), BESTLON:=lagLon]
+      na_num <- nrow(schools[is.na(BESTLAT) | is.na(BESTLON)])
+      cat(na_num, '\n')
+    }
+    
+    na_num <-1
+    iter <- 0
+    setkey(schools, NCESSCH, YEAR)
+    while(iter < 4 & na_num > 0){
+      iter <- iter + 1
+      cat(iter, '\n')
+      schools <- schools[, leadLat := shift(BESTLAT, iter, type='lead'), by=NCESSCH]
+      schools <- schools[, leadLon := shift(BESTLON, iter, type='lead'), by=NCESSCH]
+      schools <- schools[is.na(BESTLAT), BESTLAT:=leadLat]
+      schools <- schools[is.na(BESTLON), BESTLON:=leadLon]
+      na_num <- nrow(schools[is.na(BESTLAT) | is.na(BESTLON)])
+      cat(na_num, '\n')
+    }
+    
+    schools <- schools[NCESSCH=='90483001849', BESTLAT:=41.543699]
+    schools <- schools[NCESSCH=='90483001849', BESTLON:=-73.047156]
+    na_num <- nrow(schools[is.na(BESTLAT) | is.na(BESTLON)])
+    cat(na_num, '\n')
+    schools <- schools[!(is.na(BESTLAT) | is.na(BESTLON))]
+    
+    ## Assign LEAID.1989 to post2014 data
+    dt_lea89 <- unique(schools[!is.na(LEAID.1989)][,.(NCESSCH, LEAID.1989.Join = LEAID.1989)])
+    setkey(dt_lea89, NCESSCH)
+    setkey(schools, NCESSCH)
+    schools <- dt_lea89[schools]
+    schools <- schools[is.na(LEAID.1989), LEAID.1989:=LEAID.1989.Join]
+    
+    ## For 'new' schools post 2014, intersect to LEAID.1989
+    schools_missing <- schools[is.na(LEAID.1989), .SD[1], by=NCESSCH][, .(NCESSCH, BESTLAT, BESTLON)]
+    shps <- get_district_maps()
+    shps_89 <- shps$`1989`  
+    shps_89 <- shps_89$map
+    coords <- cbind(Longitude = as.numeric(as.character(schools_missing$BESTLON)), 
+                    Latitude = as.numeric(as.character(schools_missing$BESTLAT)))
+    schools_pts <- sp::SpatialPointsDataFrame(coords, schools_missing, proj4string = sp::CRS(proj_env))
+    tmp <- sp::over(schools_pts, shps_89)
+    tmp <- as.data.table(tmp)
+    schools_missing <- data.table(NCESSCH =schools_missing$NCESSCH, LEAID.1989.JOIN=tmp$GEOID)
+    setkey(schools_missing, NCESSCH)
+    setkey(schools, NCESSCH)
+    schools <- schools_missing[schools]
+    schools <- schools[is.na(LEAID.1989), LEAID.1989:=LEAID.1989.JOIN]
+    cat(nrow(schools[is.na(LEAID.1989)]), '\n')
+    
+    # For those still unmatched, assign to nearest LEAID.1989
+    schools_missing <- schools[is.na(LEAID.1989), .SD[1], by=NCESSCH][, .(NCESSCH, BESTLAT, BESTLON)]
+    coords <- cbind(Longitude = as.numeric(as.character(schools_missing$BESTLON)), 
+                    Latitude = as.numeric(as.character(schools_missing$BESTLAT)))
+    schools_pts <- sp::SpatialPointsDataFrame(coords, schools_missing, proj4string = sp::CRS(proj_env))
+    utmStr <- "+proj=utm +zone=%d +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0"
+    crs <- CRS(sprintf(utmStr, 32))
+    shps_89UTM <- spTransform(shps_89, crs)
+    pts_UTM <- spTransform(schools_pts, crs)
+    for(i_school in 1:nrow(schools_missing)){
+      tmp_LEADID.1989 <- as.character(shps_89UTM[which.min(rgeos::gDistance(pts_UTM[i_school,], shps_89UTM, byid=TRUE)),]@data$shp_LEA)
+      schools <- schools[NCESSCH==pts_UTM[i_school,]$NCESSCH, LEAID.1989 := tmp_LEADID.1989]
+    }
+    schools_missing <- schools[is.na(LEAID.1989), .SD[1], by=NCESSCH][, .(NCESSCH, BESTLAT, BESTLON)]
+    cat('Number missing LEAD.1989:', nrow(schools_missing), '\n')
     
     # Consolidate and georeference
     schools_unique <- unique(schools[, .(LEAID, NCESSCH, YEAR, WHITE, BLACK, BESTLON, BESTLAT)])

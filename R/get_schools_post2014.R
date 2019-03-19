@@ -30,9 +30,9 @@ get_schools_post2014 <- function(){
     s_1415 <- s_1415_geo[s_1415_mem]
     s_1415 <- s_1415_dir[s_1415]
     s_1415 <- s_1415_char[s_1415]
-    s_1415 <- s_1415_staff[s_1415]
+    s_1415 <- s_1415_staff[s_1415 ]
     
-    s_1415 <- s_1415[, .(LEAID, NCESSCH, 
+    s_1415 <- s_1415[, .(LEAID, NCESSCH, FIPST,
                          BESTLAT = LATCODE, BESTLON = LONGCODE,
                          FTE, GSHI, GSLO, PHONE, SCHNO=SCHID,
                          TYPE = SCH_TYPE, STATUS = SY_STATUS,
@@ -65,6 +65,7 @@ get_schools_post2014 <- function(){
     
     s_1516 <- s_1516[, .(LEAID, #
                          NCESSCH, #
+                         FIPST, 
                          BESTLAT = LAT1516, #
                          BESTLON = LON1516, #
                          LEAID.1989 = NA,
@@ -88,7 +89,7 @@ get_schools_post2014 <- function(){
                          SCHNAM = SCH_NAME, #
                          SEASCH = ST_SCHID, #
                          STID = ST_LEAID, #
-                         WHITE = WH, #
+                         WHI  schools_post2014_locatioTE = WH, #
                          UG, #
                          YEAR.LIFTED = NA,
                          LIFTED = NA,
@@ -124,7 +125,7 @@ get_schools_post2014 <- function(){
     setkey(dt_member, NCESSCH)
     
     dt_race <- dt_mem_work[GRADE %in% 'No Category Codes' &
-                             grepl('Black|Hispanic|White|Asian|Pacific|Indian|Two or more', RACE_ETHNICITY),
+                             schools_post2014_locatio  grepl('Black|Hispanic|White|Asian|Pacific|Indian|Two or more', RACE_ETHNICITY),
                            .(STUDENT_COUNT = sum(STUDENT_COUNT)),
                            by=.(NCESSCH, RACE_ETHNICITY)]
     dt_race <- tidyr::spread(dt_race, RACE_ETHNICITY, STUDENT_COUNT)
@@ -157,6 +158,7 @@ get_schools_post2014 <- function(){
     
     s_1617 <- s_1617[, .(LEAID, #
                          NCESSCH, #
+                         FIPST,
                          BESTLAT = LAT, #
                          BESTLON = LON, #
                          LEAID.1989 = NA,
@@ -226,6 +228,12 @@ get_schools_post2014 <- function(){
     s_1617 <- s_1617[, TOTETH:=as.integer(TOTETH)]
     #----------------#
     schools_post2014 <- rbindlist(list(s_1415, s_1516, s_1617), use.names = TRUE, fill=TRUE)
+    
+    # Drop puerto rico, etc
+    state_fips <- get_state_fips()
+    schools_post2014 <- schools_post2014[, FIPST := stringr::str_pad(FIPST, width = 2, side = 'left', pad = '0')]
+    schools_post2014 <- schools_post2014[FIPST %in% state_fips$STFIPS]
+
     saveRDS(schools_post2014, file = schools_post2014_location)
   } else {
     schools_post2014 <- readRDS(schools_post2014_location)
