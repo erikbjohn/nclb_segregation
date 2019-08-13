@@ -4,7 +4,7 @@ create_segregation_indices <- function(){
     # Year mapping
     l_districts <- get_district_maps()
     shp_county <- get_county_maps()
-    l_schools <- get_schools()
+    l_schools <- get_schools()  
     
     map_base_year <- l_districts[[1]]$map
     year_base_year <- l_districts[[1]]$numYear
@@ -34,7 +34,7 @@ create_segregation_indices <- function(){
       over_counties <- data.table(cbind(schools_pts_year@data, over_counties))
       l_indices$counties <- functions_segregation_indices(over_counties, map_year='2010', geo_scale='CNTYFIPS')
       
-      # Indices based on 'acutal' (no forced mapping of charter schools)
+      # Indices based on 'actual' (no forced mapping of charter schools)
       actual <- l_schools$dt[YEAR==map_year, .(YEAR, BLACK, WHITE, NCESSCH, GEOID=LEAID, STATEFP=stringr::str_sub(LEAID, 1, 2))]
       l_indices$actual <- functions_segregation_indices(actual, map_year='no_mapping_acutal', geo_scale='GEOID')
       

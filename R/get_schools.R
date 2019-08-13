@@ -246,6 +246,22 @@ get_schools <- function(){
     schools_missing <- schools[is.na(LEAID.1989), .SD[1], by=NCESSCH][, .(NCESSCH, BESTLAT, BESTLON)]
     cat('Number missing LEAD.1989:', nrow(schools_missing), '\n')
     
+    # Update the lifted/year lifted restrictions for post 2014
+    dt_restrictions <- schools[order(NCESSCH, -YEAR)][!is.na(LIFTED) & LIFTED != 'NONE', .SD[1], by=LEAID.1989, .SDcols=c('YEAR.LIFTED', 'LIFTED')]
+    setnames(dt_restrictions, c('YEAR.LIFTED', 'LIFTED'), c('YEAR.LIFTED.JOIN', 'LIFTED.JOIN'))
+    setkey(dt_restrictions, LEAID.1989)
+    setkey(schools, LEAID.1989)
+    schools <- dt_restrictions[schools]
+    schools <- schools[is.na(YEAR.LIFTED) & !is.na(YEAR.LIFTED.JOIN), YEAR.LIFTED:=YEAR.LIFTED.JOIN]
+    schools <- schools[is.na(LIFTED) & !is.na(LIFTED.JOIN), LIFTED:=LIFTED.JOIN]
+    
+    # Drop columns with 'join'
+    cols_join <- names(schools)[stringr::str_detect(names(schools), '(?i)join')]
+    cols_impute <- names(schools)[stringr::str_detect(names(schools), '((?i)((white|black)\\_))|(lag|lead)')]
+    cols_drop <- c(cols_join, cols_impute)
+    cols <- names(schools)
+    cols_keep <- cols[!(cols %in% cols_drop)]
+    schools <- schools[, cols_keep, with=FALSE]
     # Consolidate and georeference
     schools_unique <- unique(schools[, .(LEAID, NCESSCH, YEAR, WHITE, BLACK, BESTLON, BESTLAT)])
     coords <- cbind(Longitude = as.numeric(as.character(schools_unique$BESTLON)), 

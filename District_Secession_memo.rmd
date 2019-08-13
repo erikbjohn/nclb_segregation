@@ -1,0 +1,64 @@
+---
+title: "District_Secession_memo"
+author: "E Johnson"
+date: "8/13/2019"
+output: 
+  pdf_document:
+    fig_caption: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(data.table)
+library(knitr)
+library(xtable)
+suppressPackageStartupMessages(library(lubridate))
+dt <- readRDS('~/Dropbox/pkg.data/nclb_segregation/Clean/district_secession_stats.rds')
+source('R/get_secessions.R')
+secessions <- get_secessions()
+
+```
+
+# Overview
+
+This memo illustrates the dynamics of racial segregation and new school openings for each of the
+`r length(unique(secessions[secession_status=='Seceded']$seceded_from_district_ncesid))` school districts which experienced a secession from `r min(secessions[!is.na(secession_year)]$secession_year)` through `r max(secessions[!is.na(secession_year)]$secession_year)`. There are four sections to the analysis. First, we discuss the data. Second, we perfrom a per district case study. Third, we present aggregate data. Finally, we illustrate some of the pitfalls and concerns with aggregation.
+
+# Data
+
+Data consists of school district secessions and school level demograhpic characteristics.
+
+## Secession data
+
+Secession data comes from EdBuild. A full discription of EdBuild's mission, funding, and members can be found at \url{https://edbuild.org}. The description of the data collection and analysis may be found at \url{https://edbuild.org/content/fractured/methodology}.
+
+Edbuild identifies `r nrow(secessions[secession_status=='Seceded'])` successful secessions out of `r nrow(secessions)` attempts in United States school districts since `r min(secessions[!is.na(secession_year)]$secession_year)`. The number of successful sessions by year is shown in Figure \ref{fig:years}. Table \ref{tbl:secessionStatsState} shows the number of successful secessions by state.
+
+```{r echo=FALSE, fig.width=4, fig.height=3, fig.cap="\\label{fig:years}Number of Successful Sessions by Year"}
+annual_secessions <- secessions[, .(n_secessions = .N), by=secession_year][!is.na(secession_year)][order(-secession_year)]
+#print(xtable(annual_secessions[order(as.integer(secession_year)), .(Year = as.character(secession_year), Count=n_secessions)],
+#caption = "Successful Secessions by Year", label='tbl:secessionStatsYear'),
+#      comment=FALSE,
+#      include.rownames=FALSE)
+ggplot2::ggplot(annual_secessions, aes(x=secession_year, y=n_secessions)) + geom_col() + theme_bw() + xlab('Year') + ylab('Number of Secessions')
+```
+
+```{r echo=FALSE, results='asis'}
+state_secessions <- secessions[secession_status=='Seceded', .(n_secessions = .N), by=state_name][order(-n_secessions)]
+print(xtable(state_secessions[order(as.integer(-n_secessions)), .(State = state_name, Count=n_secessions)],
+caption = "Successful Secessions by State", label='tbl:secessionStatsState'),
+      comment=FALSE,
+      include.rownames=FALSE)
+#ggplot2::ggplot(state_secessions, aes(x=state_name, y=n_secessions)) + geom_col() + theme_bw() + xlab('Year') + ylab('Number of Secessions')
+```
+
+\clearpage
+
+# Individual Districts
+
+Next, we examine individual districts.
+
+```{r echo=FALSE, results='asis'}
+
+```
