@@ -1,7 +1,6 @@
 get_secessions <- function(){
   get_secessions_location <- '~/Dropbox/pkg.data/nclb_segregation/Clean/secessions.rds'
   if(!file.exists(get_secessions_location)){
-    schools <- create_segregation_indices()
     raw <- fread('~/Dropbox/pkg.data/nclb_segregation/raw/secession/school_district_secessions_since2000_2019.csv')
     setnames(raw, names(raw), c('state_name', 'secession_status_full', 'seceding_district_ncesid', 
                                 'seceding_district', 'seceded_from_district_ncesid', 'sceded_from_behind_district'))

@@ -124,7 +124,7 @@ mike_amanda_data <- function(){
 #  dt_stats <- dt_stats[NCESSCH %in% ncessch_in_3_not_4, in_three_not_four:=1]
 #  dt_stats <- dt_stats[in_three_not_four==0]
   
-  dt_stats <- dt_stats[max_years_since_secession == 10] 
+  #dt_stats <- dt_stats[max_years_since_secession == 10] 
   
   dt_white_share <- dt_stats[, .(WHITE_SHARE=mean(WHITE_SHARE)), by=.(years_since_secession, district_type)]
   
@@ -161,11 +161,12 @@ mike_amanda_data <- function(){
     years <- unique(dt_lea$YEAR)
     # Segregation Indices stats
     l_seg_indices_before <- lapply(years, function(sYear) 
-      functions_segregation_indices(dt_lea[YEAR == sYear], map_year = secession_year, geo_scale = 'LEAID.1989')[1, 6:9])
+      functions_segregation_indices(dt_lea[YEAR == sYear], map_year = secession_info$secession_year, geo_scale = 'LEAID.1989')[1, 6:9])
     dt_seg_indices <- rbindlist(l_seg_indices_before, use.names = TRUE, fill=TRUE)
     dt_seg_indices$YEAR <- years
     dt_seg_indices$LEAID.1989 <- as.character(lea_secession)
     dt_seg_indices$LEANM.1989 <- secession_info[1]$sceded_from_behind_district
+    dt_seg_indices$secession_year <- secession_info[1]$secession_year
     dt_segs <- rbindlist(list(dt_segs, dt_seg_indices), use.names = TRUE, fill=TRUE)
   }
   setkey(dt_segs, LEAID.1989, YEAR)

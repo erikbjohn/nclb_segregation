@@ -35,7 +35,7 @@ Secession data comes from EdBuild. A full discription of EdBuild's mission, fund
 
 Edbuild identifies `r nrow(secessions[secession_status=='Seceded'])` successful secessions out of `r nrow(secessions)` attempts in United States school districts since `r min(secessions[!is.na(secession_year)]$secession_year)`. The number of successful sessions by year is shown in Figure \ref{fig:years}. Table \ref{tbl:secessionStatsState} shows the number of successful secessions by state.
 
-```{r echo=FALSE, fig.width=4, fig.height=3, fig.cap="\\label{fig:years}Number of Successful Sessions by Year"}
+```{r echo=FALSE, fig.width=3, fig.height=2, fig.cap="\\label{fig:years}Number of Successful Sessions by Year"}
 annual_secessions <- secessions[, .(n_secessions = .N), by=secession_year][!is.na(secession_year)][order(-secession_year)]
 #print(xtable(annual_secessions[order(as.integer(secession_year)), .(Year = as.character(secession_year), Count=n_secessions)],
 #caption = "Successful Secessions by Year", label='tbl:secessionStatsYear'),
@@ -60,5 +60,20 @@ caption = "Successful Secessions by State", label='tbl:secessionStatsState'),
 Next, we examine individual districts.
 
 ```{r echo=FALSE, results='asis'}
+districts <- unique(dt$LEAID.1989)
+
+for(district in districts){
+district <- stringr::str_pad(district, )
+secession_year <- dt[LEAID.1989 %in% district]$secession_year[1]
+dt_district <- dt[LEAID.1989 %in% district][order(as.integer(YEAR))]
+new_district <- secessions[seceded_from_district_ncesid %in% district]$seceding_district_ncesid[1]
+plt <- ggplot(dt_district, aes(x=YEAR, y=mean_WHITE_SHARE)) + 
+  geom_line() + 
+  geom_vline(xintercept=secession_year) +
+  geom_line(data=dt_district[LEAID.1989 %in% secessions$seceded_from_district_ncesid[1]][1], aes(x=YEAR, y=mean_WHITE_SHARE))
+ggsave(filename = 'test.png', plot=plt)
+plot(plot_1)
+#cat('\\clearpage')
+}
 
 ```
