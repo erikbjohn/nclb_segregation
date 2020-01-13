@@ -31,9 +31,43 @@ Clean Data Location |                                                      |
 2) Possible to get the data for 2017-2018?
 3) Understand datastructure from Zack Dorobiala
 
+\clearpage
+
 ## Internet
 
-Collected by Zack Dorobiala from the Department of Education Office of Civil Rights (https://ocrdata.ed.gov/flex/Reports.aspx?type=school).
+Collected by Zack Dorobiala from the Department of Education Office of Civil Rights\footnote{(https://ocrdata.ed.gov/flex/Reports.aspx?type=school)}.
+Scraped and Saved as individual files. Filename conventions below:
+
+### Filename conventions
+
+DATATYPE-STATEABBR-YEAR.xlsx
+
+#### DATATYPE:
+
+Abbreviation | Data Description 
+-------------|----------------
+ACT | Advanced Course Taking 
+APC | Advanced Placement Course and Test Taking
+DND | Discipline and Disabilities (Only one file) 
+DOS/DOS2 | Discipline of Students (Race/Ethnicity) 
+ED | Total Enrollment (Race/Ethnicity)
+HSC | High School Completers 
+HSGR | High School Graduation Retesting (through 2006)
+HSGT | High School Graduation Testing (through 2006)
+IA | Interscholastic Athletics
+\textbf{M[1-14]-[2004-2006]} | Not sure
+PT | Promotion Testing (through 2006)
+
+
+#### STATEABBR:
+Abbreviation | State
+----------|-----------------
+AL | Alabama
+TN | Tennessee
+M | Maine
+
+
+
 
 ## Disc
 
