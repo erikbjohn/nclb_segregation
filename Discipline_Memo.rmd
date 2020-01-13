@@ -1,0 +1,61 @@
+---
+title: "Discipline Data Memo"
+author: "Johnson"
+date: "1/13/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Data Description
+
+Two Sources:
+
+1) Office of Civil Rights webpage at ED.gov (Internet)
+2) Office of Civil Rights Compact Discs (Disc)
+
+
+Dataset | Internet |Disc 
+---------|--------------|------------
+Remote Location     | https://ocrdata.ed.gov/flex/Reports.aspx?type=school | Flatfile request (ocrdata@ed.gov on 4/25/2018)
+Raw Data Location   | ~/SchoolData/outcomes_scraped/School research        | ~/raw/CivilRights  
+Years               | 2000, 2004, 2006                                     | 2009-2010, 2011-2012, 2013-2014, 2015-2016 
+Clean Data Location |                                                      |
+
+
+## TODO:
+
+1) Understand fields: are they available in all/most years. Which is best to use in panel setting?
+2) Possible to get the data for 2017-2018?
+3) Understand datastructure from Zack Dorobiala
+
+## Internet
+
+Collected by Zack Dorobiala from the Department of Education Office of Civil Rights (https://ocrdata.ed.gov/flex/Reports.aspx?type=school).
+
+## Disc
+
+Collected via Records request from Office of Civil Rights Department of Education
+
+Response email accompanying request:
+
+\begin{quote}
+Thank you for your request for data from the 2015-16 CRDC, and from previous CRDCs, including the 2013-14, 2011-12, and 2009-10 CRDCs.
+
+OCR will shortly be mailing the DVDs that you requested, including the DVD of the 2015-16 CRDC, to the address provided on your flat file request form.   The DVDs that OCR is mailing to you are privacy protected data.
+
+The Flat File of the 2011-12 and 2009-10 CRDCs includes the data submitted from all schools and districts at the close of the survey collection period.
+
+Subsequently, some districts have updated their data and others may do so as well.  For example, for 2011-12, all the school districts in Florida have amended their CRDC submission to include updated numbers for arrests for students without disabilities.
+ 
+
+OCR maintains a list of districts that amended their CRDC submissions for 2011-12 and 2009-10.  Those lists are available upon request.  Users may download the updated data from the CRDC website (although it is not designated as updated).
+
+For the 2013-14 CRDC, in addition to the prior corrections to the Florida data that were previously included, the June 2017 final data file for the 2013-14 CRDC contains corrections from 16 school districts, for a variety of data issues,  including preschool enrollment, suspensions and expulsions, chronic student absenteeism, teacher absenteeism, referrals to law enforcement, school-related arrests, expulsions, harassment or bullying, and advanced placement enrollment Information on the districts that submitted  corrections is provided is provided in the “read me” file. Detailed information on the variables that were corrected for each district is provided in the “read me details” file.
+\end{quote}
+
+
+
+
